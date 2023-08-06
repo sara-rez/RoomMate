@@ -6,13 +6,13 @@ using RoomMate.Domain.Domain;
 
 namespace RoomMate.Core.Handler
 {
-    public class BookingRequestHandler
+    public class BookingRequestHandler : IBookingRequestHandler
     {
-        private readonly IBookingService _bookingService;
+        private readonly IBookingRepository _bookingRepository;
 
-        public BookingRequestHandler(IBookingService bookingService)
+        public BookingRequestHandler(IBookingRepository bookingRepository)
         {
-            _bookingService = bookingService;
+            _bookingRepository = bookingRepository;
         }
 
         public BookingResult Book(BookingRequest bookingRequest)
@@ -21,16 +21,16 @@ namespace RoomMate.Core.Handler
             {
                 throw new ArgumentNullException(nameof(bookingRequest));
             }
-
-            var avaiableRooms = _bookingService.GetAvailableRooms(bookingRequest.Date);
             var result = CreateBookingObject<BookingResult>(bookingRequest);
+
+            var avaiableRooms = _bookingRepository.GetAvailableRooms(bookingRequest.Date);
             if (avaiableRooms.Any())
             {
                 var room = avaiableRooms.First();
                 var booking = CreateBookingObject<Booking>(bookingRequest);
                 booking.RoomID = room.Id;
 
-                _bookingService.Save(booking);
+                _bookingRepository.Save(booking);
 
                 result.BookingId = booking.Id;
                 result.Flag = BookingResultFlag.Success;
@@ -43,7 +43,7 @@ namespace RoomMate.Core.Handler
             return result;
         }
 
-        private static TBooking CreateBookingObject<TBooking>(BookingRequest bookingRequest) where TBooking 
+        private static TBooking CreateBookingObject<TBooking>(BookingRequest bookingRequest) where TBooking
             : BookingBase, new()
         {
             return new TBooking
