@@ -4,7 +4,6 @@ using RoomMate.Core.Handler;
 using RoomMate.Core.Interfaces;
 using RoomMate.Core.Model;
 using RoomMate.Domain.Domain;
-using Shouldly;
 
 namespace RoomMate.Core.Test
 {
@@ -12,7 +11,7 @@ namespace RoomMate.Core.Test
     {
         private readonly BookingRequestHandler _handler;
         private readonly BookingRequest _request;
-        private Mock<IBookingService> _bookingServiceMock;
+        private Mock<IBookingRepository> _bookingRepositoryMock;
         private List<Room> _availableRooms;
 
         public BookingRequestHandlerTest()
@@ -27,11 +26,11 @@ namespace RoomMate.Core.Test
             };
 
             _availableRooms = new List<Room> { new Room() { Id = 1 } };
-            _bookingServiceMock = new Mock<IBookingService>();
-            _bookingServiceMock.Setup(q => q.GetAvailableRooms(_request.Date))
+            _bookingRepositoryMock = new Mock<IBookingRepository>();
+            _bookingRepositoryMock.Setup(q => q.GetAvailableRooms(_request.Date))
                 .Returns(_availableRooms);
 
-            _handler = new BookingRequestHandler(_bookingServiceMock.Object);
+            _handler = new BookingRequestHandler(_bookingRepositoryMock.Object);
         }
 
         [Fact]
@@ -64,7 +63,7 @@ namespace RoomMate.Core.Test
         {
             // Arrange
             Booking? savedBooking = null;
-            _bookingServiceMock.Setup(x => x.Save(It.IsAny<Booking>()))
+            _bookingRepositoryMock.Setup(x => x.Save(It.IsAny<Booking>()))
                 .Callback<Booking>(booking =>
                 {
                     savedBooking = booking;
@@ -74,7 +73,7 @@ namespace RoomMate.Core.Test
             _handler.Book(_request);
 
             // Assert
-            _bookingServiceMock.Verify(x => x.Save(It.IsAny<Booking>()), Times.Once);
+            _bookingRepositoryMock.Verify(x => x.Save(It.IsAny<Booking>()), Times.Once);
           
             savedBooking.ShouldNotBeNull();
 
@@ -94,7 +93,7 @@ namespace RoomMate.Core.Test
             _handler.Book(_request);
 
             // Assert
-            _bookingServiceMock.Verify(x => x.Save(It.IsAny<Booking>()), Times.Never);
+            _bookingRepositoryMock.Verify(x => x.Save(It.IsAny<Booking>()), Times.Never);
         }
 
         [Theory]
@@ -125,7 +124,7 @@ namespace RoomMate.Core.Test
             {
                 _availableRooms.Clear();
             }
-            _bookingServiceMock.Setup(x => x.Save(It.IsAny<Booking>()))
+            _bookingRepositoryMock.Setup(x => x.Save(It.IsAny<Booking>()))
               .Callback<Booking>(booking =>
               {
                   booking.Id = bookingId;
